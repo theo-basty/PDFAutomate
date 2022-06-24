@@ -1,3 +1,5 @@
+# COPYRIGHT Théo BASTY - 2022
+
 import sys
 import time
 
