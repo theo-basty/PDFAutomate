@@ -12,6 +12,7 @@ COMMENT_PATTERN = re.compile("#.*")
 
 operations = {}
 pdf_cache = {}
+history = ["#PDFAutomate v1.1 - Beginning of history"]
 
 
 def inst_open(instruction_line):
@@ -60,12 +61,12 @@ def inst_remove(instruction_line):
 operations["REMOVE"] = inst_remove
 
 
-def inst_save(instruction_line):
+def inst_write(instruction_line):
     global staging
-    filename = re.match("SAVE (.*)", instruction_line).group(1)
+    filename = re.match("WRITE (.*)", instruction_line).group(1)
     print("Saving buffer as '" + filename + "'")
     staging.save(filename)
-operations["SAVE"] = inst_save
+operations["WRITE"] = inst_write
 
 
 def inst_keep(instruction_line):
@@ -99,24 +100,79 @@ def inst_load(instruction_line):
     staging = pdf_cache[cache_name]
 operations["LOAD"] = inst_load
 
-instructions = open("instructions.txt")
-staging = pikepdf.new()
-startingAt = time.time()
-for i, line in enumerate(instructions, start=1):
-    line = COMMENT_PATTERN.sub("", line).strip()
-    if not line:
-        print("")
-        continue
-    regexLine = INST_PATTERN.match(line)
-    if regexLine is None:
-        print("No instructions found on line " + str(i), file=sys.stderr)
-        break
-    inst = regexLine.group(0)
 
-    if inst in operations.keys():
-        operations[inst](line)
+def inst_quit(instruction_line):
+    global staging
+    print("Good Bye !")
+    sys.exit()
+operations["QUIT"] = inst_quit
+
+
+def inst_reset(instruction_line):
+    global staging
+    print("Resetting the buffer")
+    staging = pikepdf.new()
+operations["RESET"] = inst_reset
+
+
+def inst_history(instruction_line):
+    global history
+    for line_num, instruction in enumerate(history, start=1):
+        line_num = len(history) - line_num
+        print("{:3d}: {:s}".format(line_num, instruction))
+operations["HISTORY"] = inst_history
+
+
+def inst_savehist(instruction_line):
+    global history
+    filename = re.match("SAVEHIST (.*)", instruction_line).group(1)
+    print("Saving history as '" + filename + "'")
+    instfile = open(filename, mode="w")
+    for histline in history:
+        instruct = INST_PATTERN.match(histline)
+        if instruct is None or (instruct.group(0) != "HISTORY" and instruct.group(0) != "SAVEHIST"):
+            instfile.write(histline + "\n")
+    instfile.close()
+operations["SAVEHIST"] = inst_savehist
+
+
+if __name__ == '__main__':
+    if len(sys.argv) >= 2:
+        from_stdin = False
+        instructions = open(sys.argv[1])
+        startingAt = time.time()
     else:
-        print("Instruction " + str(inst) + " on line " + str(i) + " is not a valid instruction", file=sys.stderr)
-        break
-print("==========================================")
-print("Instructions ran in " + str(round((time.time() - startingAt) * 1000)) + "ms")
+        from_stdin = True
+        instructions = sys.stdin
+
+    staging = pikepdf.new()
+    if from_stdin:
+        print(">", end="")
+    for i, line in enumerate(instructions, start=1):
+        line = COMMENT_PATTERN.sub("", line).strip()
+        if not line:
+            print("")
+            continue
+        regexLine = INST_PATTERN.match(line)
+        if regexLine is None:
+            print("No instructions found on line " + str(i), file=sys.stderr)
+            if not from_stdin:
+                break
+        inst = regexLine.group(0)
+    
+        if inst in operations.keys():
+            if len(history) > 100:
+                history.pop(0)
+            history.append(line)
+            operations[inst](line)
+        else:
+            print("Instruction " + str(inst) + " on line " + str(i) + " is not a valid instruction", file=sys.stderr)
+            if not from_stdin:
+                break
+
+        if from_stdin:
+            print(">", end="")
+
+    if not from_stdin:
+        print("==========================================")
+        print("Instructions ran in " + str(round((time.time() - startingAt) * 1000)) + "ms")

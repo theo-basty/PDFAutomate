@@ -119,3 +119,31 @@ LOAD source
 REMOVE 1 2 3 5 10
 SAVE remains.pdf
 ```
+
+
+### QUIT
+`QUIT`  
+This operation close the application. It is mainly used when in interactive mode.
+
+
+### RESET
+`RESET`  
+This operation clears the buffer. 
+
+
+### HISTORY
+`HISTORY`  
+This operation shows the operations' history. The history goes up to 100 operations.  
+There is a marker at the beginning of the history with the version of PDFAutomate.
+
+
+### SAVEHIST
+`SAVEHIST <filename>`  
+This operation save the history in a file. 
+You can use this to save your operations for later.
+
+Example :
+- Save the history in a file named history.txt  
+```
+SAVEHIST history.txt
+```
