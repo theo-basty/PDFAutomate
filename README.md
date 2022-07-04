@@ -65,14 +65,14 @@ Example :
 REMOVE 1 2 5 7
 ```
 
-### SAVE
-`SAVE <filename>`  
+### WRITE
+`WRITE <filename>`  
 This operation save the content of the buffer in a file 
 
 Example :
 - Save in the file mynewpdf.pdf  
 ```
-SAVE mynewpdf.pdf
+WRITE mynewpdf.pdf
 ```
 
 ### KEEP
